@@ -151,16 +151,17 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 ├── README.md                    # Leia-me do projeto
 ├── funcoes_vac.py               # Módulo de funções deste projeto
 ├── requirements.txt             # Relação de bibliotecas e dependências
-├── train_bbox.ipyn              # Módulo de treinamento utilizando apenas bounding boxes
-├── train_mix.ipyn               # Módulo de treinamento utilizando bounding boxes e segmentação por polígonos
+├── dataset-prep_bbox.ipynb      # Módulo de detecção das imagens utilizando apenas bounding boxes
+├── dataset-prep_mix.ipynb       # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
+├── train_bbox.ipynb             # Módulo de treinamento utilizando apenas bounding boxes
 └── vac.ipynb                    # Código principal da API FastAPI
 ```
 
-O dataset de imagens e os pesos pesados do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train.py e a API executada via main.py.
+O dataset de imagens e os pesos pesados do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train_bbox.ipynb e a API executada via api.py.
 
 ## ▶ 9. Passo a Passo (Git Flow & Google Colab)
 Por ser um projeto solo estruturado com metodologia ágil (Kanban/Scrum no Trello) e GitFlow, o desenvolvimento é realizado **`utilizando o Google Colab (com suporte a GPU)`** para os treinamentos e manipulação de IA, e o versionamento via comandos Git integrados (onde o fluxo de desenvolvimento separa as entregas em branches de features ramificadas a partir da develop e consolidadas na main.<br>
-- Estrutura de Branches:<br>
+- Estrutura de Branches (5):<br>
 ```text
 ├── VisionAutoCheck/
 │   └── main/        		          # Branch principal
