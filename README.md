@@ -164,7 +164,7 @@ Por ser um projeto solo estruturado com metodologia ágil (Kanban/Scrum no Trell
 ```text
 ├── VisionAutoCheck/
 │   └── main/        		          # Branch principal
-│       └── develop/     		# Branch de desenvolvimento
+│       └── develop/     		   # Branch de desenvolvimento
 │           ├── feature/dataset-prep      # Branch de preparação do dataset
 │           ├── feature/fastapi-setup  	  # Branch da API
 │           └── feature/yolo-finetuning	  # Branch do YOLO
