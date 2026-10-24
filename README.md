@@ -6,7 +6,7 @@ Projeto referente ao curso de Lógica de Programação e Machine Learning do SCT
 Este espaço foi criado para centralizar os códigos, notebooks e materiais práticos desenvolvidos durante este projeto.<br>
 <hr>
 
-## 🚗 1. VisionAutoCheck (VAC) — Sistema Inteligente de Detecção para Oficina Automotiva**
+## 🚗 1. VisionAutoCheck (VAC) — Sistema Inteligente de Detecção para Oficina Automotiva
 
 A Indústria 4.0 e a manutenção automotiva moderna exigem soluções inteligentes que vão muito além da simples captura de imagens. No mercado de trabalho atual, o Engenheiro de IA precisa saber construir fluxos completos de ponta a ponta: desde a curadoria de dados e o treinamento de modelos de estado-da-arte até o empacotamento da inteligência em uma API RESTful corporativa.
 O VisionAutoCheck (VAC) foi desenvolvido como um microserviço backend de alta performance voltado para o ecossistema de oficinas mecânicas e gestão de peças. O objetivo do sistema é automatizar inicialmente a identificação visual de 10 classes distintas — abrangendo componentes de motor, suspensão, freios, fluidos e ferramentas de bancada — permitindo que outros sistemas da empresa consumam inferências em tempo real.
@@ -136,15 +136,15 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 ```text
 ├── VisionAutoCheck/
 │   ├── dataset_bbox/           # Diretório Principal de armazenamento das imagens (estrutura idêntica ao do dataset)
-│   ├── dataset/        	  # Diretório Secundário de armazenamento das imagens
-│   │   ├── train/     		   # Subdiretório de treino
+│   ├── dataset/        	 # Diretório Secundário de armazenamento das imagens
+│   │   ├── train/     		  # Subdiretório de treino
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
 │   │   │   ├── labels/        	 # Subdiretório dos labels das imagens treinadas
-│   │   ├── val/     		  # Subdiretório de validação
+│   │   ├── val/     		 # Subdiretório de validação
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
 │   │   │   ├── labels/        	 # Subdiretório dos labels das imagens validadas
 │   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (M)
-│   ├── models/        		  # Pesos treinados do YOLO (.pt)
+│   ├── models/        		 # Pesos treinados do YOLO (.pt)
 │   └── runs/                    # Treinamentos do modelo
 │   └── salvos/                  # Modelos treinados salvos
 ├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
