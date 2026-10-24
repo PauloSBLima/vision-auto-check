@@ -1,0 +1,31 @@
+# Ignorar arquivos e pastas de sistema do Google Colab
+.config/
+sample_data/
+
+# Ignorar pastas de cache do Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# Ignorar o ambiente virtual (caso resolva criar um no futuro)
+venv/
+.venv/
+env/
+
+# Ignorar pastas de configuração local do VS Code
+.vscode/
+
+# Ignorar pasta de arquivos temporários e grandes do projeto
+dataset/
+dataset_bbox/
+dataset_exportado/
+trabalho/
+models/
+runs/
+
+# Versões anteriores
+
+# Ignorar no projeto
+*.zip
+*.pt
