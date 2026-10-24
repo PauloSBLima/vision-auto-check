@@ -135,9 +135,9 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 ## 🧱 8. Estrutura do Projeto
 ```text
 ├── VisionAutoCheck/
-│   ├── dataset_bbox/           # Diretório Principal de armazenamento das imagens (estrutura idêntica ao do dataset)
+│   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (estrutura idêntica ao do dataset)
 │   ├── dataset/        	 # Diretório Secundário de armazenamento das imagens
-│   │   ├── train/     		  # Subdiretório de treino
+│   │   ├── train/     		 # Subdiretório de treino
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
 │   │   │   ├── labels/        	 # Subdiretório dos labels das imagens treinadas
 │   │   ├── val/     		 # Subdiretório de validação
