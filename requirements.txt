@@ -1,5 +1,0 @@
-Pillow
-PyYAML
-matplotlib
-numpy
-opencv-python

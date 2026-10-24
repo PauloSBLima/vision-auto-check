@@ -1,0 +1,10 @@
+path: ./dataset      # caminho raiz do dataset
+train: train/images  # caminho relativo a `path` para imagens de treino
+val: val/images      # caminho relativo a `path` para imagens de validação
+
+# Número total de classes
+nc: 1
+
+# Nomes das 10 classes da oficina automotiva
+names:
+    0: chave_combinada

@@ -1,0 +1,19 @@
+path: .                 # como o yaml está dentro de dataset_bbox, a raiz (.) é a própria pasta
+train: train/images     # caminho relativo a `path` para imagens de treino
+val: val/images         # caminho relativo a `path` para imagens de validação
+
+# Número total de classes
+nc: 10
+
+# Nomes das 10 classes da oficina automotiva
+names:
+    0: chave_combinada
+    1: alicate
+    2: martelo
+    3: alternador
+    4: bateria
+    5: filtro_oleo
+    6: mola_suspensao
+    7: disco_embreagem
+    8: pastilha_freio
+    9: oleo_motor
