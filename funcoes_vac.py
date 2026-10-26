@@ -30,6 +30,10 @@ import yaml                         # Biblioteca para manipulação de arquivos 
 import numpy as np                  # Biblioteca para manipulação de arrays e operações matemáticas (útil para cálculos com coordenadas de bounding boxes)
 import shutil                       # Biblioteca para operações de alto nível em arquivos e diretórios (como copiar arquivos)
 
+from IPython.display import (
+    Image, 
+    display
+)                                   # Biblioteca para exibir imagens diretamente em notebooks Jupyter
 """
 #=========================================================
 # 💡 02. LEMBRETES
@@ -684,7 +688,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                             break
                         linhas_validas.append(linha_limpa)
             except Exception as e:
-                print(f"{NEGRITO}{VERMELHO}  [ERRO] Falha ao ler {txt_path.name}: {e}{RESET}")
+                print(f"{NEGRITO}{VERMELHO} ✗ [ERRO] Falha ao ler {txt_path.name}: {e}{RESET}")
                 continue
             
             # Se não for puramente bounding box ou estiver vazio, ignora
@@ -702,7 +706,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                     break
             
             if img_encontrada is None:
-                print(f"{NEGRITO}{VERMELHO}  [AVISO] Imagem para {txt_path.name} não foi encontrada.{RESET}")
+                print(f"{NEGRITO}{VERMELHO} ✗ [AVISO] Imagem para {txt_path.name} não foi encontrada.{RESET}")
                 continue
             
             # Copia o label e a imagem válida para o novo dataset_bbox
@@ -716,7 +720,32 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
     print(f"{NEGRITO}{AMARELO}  - Total de arquivos ignorados (Segmentação): {total_ignorados}{RESET}")
     print(f"==========================================")
 #============================================================================================================================
+def exibir_resultados_experimento(nome_projeto="vision_auto_check_bbox", nome_experimento="chave_combinada_v3", base_dir="runs/detect"):
+    """
+    Exibe de forma automática as principais imagens de resultado geradas pelo YOLO:
+    - Predições no lote de validação (val_batch0_pred.jpg)
+    - Gráficos de treinamento e perdas (results.png)
+    - Matriz de confusão (confusion_matrix.png)
+    """
+    caminho_exp = os.path.join(base_dir, nome_projeto, nome_experimento)
+    
+    if not os.path.exists(caminho_exp):
+        print(f"{NEGRITO}{VERMELHO} ✗[ERRO] O diretório do experimento não foi encontrado em: {caminho_exp}{RESET}")
+        return
 
+    arquivos_interesse = {
+        "🔍 Predições no Lote de Validação (val_batch0_pred.jpg)": "val_batch0_pred.jpg",
+        "📈 Gráficos de Desempenho e Loss (results.png)": "results.png",
+        "📊 Matriz de Confusão (confusion_matrix.png)": "confusion_matrix.png"
+    }
+
+    for titulo, arquivo in arquivos_interesse.items():
+        caminho_arquivo = os.path.join(caminho_exp, arquivo)
+        if os.path.exists(caminho_arquivo):
+            print(f"\n{titulo}")
+            display(Image(filename=caminho_arquivo))
+        else:
+            print(f"\n{NEGRITO}{VERMELHO} ✗[INFO] Arquivo '{arquivo}' não encontrado neste experimento.{RESET}")
 #============================================================================================================================
 
 #============================================================================================================================
