@@ -524,7 +524,7 @@ def treinar_modelo_yolo(
     caminho_yaml="./dataset/data.yaml", 
     modelo_base="yolo11n.pt", 
     epochs=50,
-    patience=25,            # Equivalente a 50% do número de épocas, para early stopping 
+    patience=15,            # Equivalente a 50% do número de épocas, para early stopping 
     imgsz=640, 
     batch=16, 
     nome_projeto="vision_auto_check", 
