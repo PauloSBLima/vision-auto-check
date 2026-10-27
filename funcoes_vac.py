@@ -34,6 +34,8 @@ from IPython.display import (
     Image, 
     display
 )                                   # Biblioteca para exibir imagens diretamente em notebooks Jupyter
+
+from ultralytics import YOLO        # Biblioteca para trabalhar com modelos YOLO (You Only Look Once) de detecção de objetos
 """
 #=========================================================
 # 💡 02. LEMBRETES
