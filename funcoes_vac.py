@@ -35,7 +35,11 @@ from IPython.display import (
     display
 )                                   # Biblioteca para exibir imagens diretamente em notebooks Jupyter
 
-from ultralytics import YOLO        # Biblioteca para trabalhar com modelos YOLO (You Only Look Once) de detecção de objetos
+from ultralytics import (
+    YOLO,                           # Biblioteca para trabalhar com modelos YOLO (You Only Look Once) de detecção de objetos
+    YOLOWorld                       # Biblioteca para trabalhar com modelos YOLO-World, que permitem detecção de objetos baseada em texto (prompt text)
+)
+
 """
 #=========================================================
 # 💡 02. LEMBRETES
@@ -307,13 +311,29 @@ def carregar_mapeamento_classes(caminho_yaml):
         dados = yaml.safe_load(f)
     return dados.get("names", None)
 #============================================================================================================================
-def gerar_labels_automaticos_dataset(pasta_base="dataset", modelo_base="yolo11n.pt", conf_min=0.25):
+def gerar_labels_automaticos_dataset(
+    pasta_base="dataset_bbox", 
+    modelo_base="yolov8s-worldv2.pt", 
+    classes=["chave", "chave combinada"], 
+    conf_min=0.25
+):
     """
     Percorre as pastas de treino e validação do dataset e gera os arquivos .txt
-    no formato YOLO utilizando um modelo base para auto-labeling.
+    no formato YOLO. Detecta automaticamente se deve usar YOLO padrão ou YOLO-World.
     """
-    print(f"{NEGRITO}{AMARELO}[INFO] Carregando modelo base {NEGRITO}{VERDE}{modelo_base}{NEGRITO}{AMARELO} para auto-labeling...{RESET}")
-    modelo = YOLO(modelo_base)
+    print(f"{NEGRITO}{AMARELO}[INFO] Carregando modelo {NEGRITO}{VERDE}{modelo_base}{NEGRITO}{AMARELO} para auto-labeling...{RESET}")
+    
+    # Identifica dinamicamente se o modelo é YOLO-World pelo nome ou classe
+    is_world = "world" in modelo_base.lower()
+    
+    if is_world:
+        modelo = YOLOWorld(modelo_base)
+        print(f"{NEGRITO}{AMARELO}[INFO] YOLO-World detectado. Definindo classes de vocabulário: {classes}{RESET}")
+        modelo.set_classes(classes)
+    else:
+        # Se for um modelo YOLO padrão (ex: yolo11n.pt)
+        modelo = YOLO(modelo_base)
+        print(f"{NEGRITO}{AMARELO}[INFO] YOLO Padrão detectado. Usando classes nativas do modelo.{RESET}")
     
     subpastas = ["train", "val"]
     
@@ -345,8 +365,8 @@ def gerar_labels_automaticos_dataset(pasta_base="dataset", modelo_base="yolo11n.
                 # Coordenadas normalizadas para o formato YOLO (centro_x, centro_y, largura, altura)
                 box_norm = box.xywhn[0].cpu().numpy()
                 
-                # ID 0 para a primeira classe (chave_combinada)
-                classe_id = 0 
+                # Se for YOLO-World ou YOLO padrão, extrai o ID da classe detectada
+                classe_id = int(box.cls[0].item()) if hasattr(box, 'cls') and len(box.cls) > 0 else 0
                 
                 x_cent, y_cent, largura, altura = box_norm
                 linhas_label.append(f"{classe_id} {x_cent:.6f} {y_cent:.6f} {largura:.6f} {altura:.6f}\n")
