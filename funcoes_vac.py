@@ -40,6 +40,7 @@ from ultralytics import (
     YOLOWorld                       # Biblioteca para trabalhar com modelos YOLO-World, que permitem detecção de objetos baseada em texto (prompt text)
 )
 
+from roboflow import Roboflow       # Biblioteca para integração com a plataforma Roboflow, que facilita o gerenciamento de datasets e modelos de visão computacional
 """
 #=========================================================
 # 💡 02. LEMBRETES
@@ -502,7 +503,7 @@ def visualizar_amostras_labels(pasta_base="dataset", split="train", num_amostras
                 # Texto em preto sobre fundo verde
                 cv2.putText(img, texto_label, (xmin + 3, pos_y - 2), cv2.FONT_HERSHEY_SIMPLEX, escala_fonte, (0, 0, 0), espessura_fonte)
         else:
-            print(f"{NEGRITO}{VERMELHO}[AVISO] Arquivo .txt não encontrado para: {img_path.name}{RESET}")
+            print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Arquivo .txt não encontrado para: {img_path.name}{RESET}")
             
         if salvar_disco:
             caminho_saida = pasta_bbox / img_path.name
@@ -672,7 +673,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
             if destino_split_dir.exists():
                 shutil.rmtree(destino_split_dir)
             shutil.copytree(origem_split_dir, destino_split_dir)
-            print(f"{NEGRITO}{VERDE}  [SUCESSO] Diretório 'test' copiado integralmente.{RESET}")
+            print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Diretório 'test' copiado integralmente.{RESET}")
             continue
 
         # Para train e val, aplicamos a filtragem rigorosa de Bounding Boxes
@@ -710,12 +711,12 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                             break
                         linhas_validas.append(linha_limpa)
             except Exception as e:
-                print(f"{NEGRITO}{VERMELHO} ✗ [ERRO] Falha ao ler {txt_path.name}: {e}{RESET}")
+                print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha ao ler {txt_path.name}: {e}{RESET}")
                 continue
             
             # Se não for puramente bounding box ou estiver vazio, ignora
             if not is_pure_bbox or not linhas_validas:
-                print(f"{NEGRITO}{g_azul_claro}  [IGNORADO] {txt_path.name} contém polígonos (segmentação).{RESET}")
+                print(f"{NEGRITO}{g_azul_claro}[IGNORADO] {txt_path.name} contém polígonos (segmentação).{RESET}")
                 total_ignorados += 1
                 continue
             
@@ -728,7 +729,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                     break
             
             if img_encontrada is None:
-                print(f"{NEGRITO}{VERMELHO} ✗ [AVISO] Imagem para {txt_path.name} não foi encontrada.{RESET}")
+                print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Imagem para {txt_path.name} não foi encontrada.{RESET}")
                 continue
             
             # Copia o label e a imagem válida para o novo dataset_bbox
@@ -752,7 +753,7 @@ def exibir_resultados_experimento(nome_projeto="vision_auto_check_bbox", nome_ex
     caminho_exp = os.path.join(base_dir, nome_projeto, nome_experimento)
     
     if not os.path.exists(caminho_exp):
-        print(f"{NEGRITO}{VERMELHO} ✗[ERRO] O diretório do experimento não foi encontrado em: {caminho_exp}{RESET}")
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ O diretório do experimento não foi encontrado em: {caminho_exp}{RESET}")
         return
 
     arquivos_interesse = {
@@ -767,7 +768,129 @@ def exibir_resultados_experimento(nome_projeto="vision_auto_check_bbox", nome_ex
             print(f"\n{titulo}")
             display(Image(filename=caminho_arquivo))
         else:
-            print(f"\n{NEGRITO}{VERMELHO} ✗[INFO] Arquivo '{arquivo}' não encontrado neste experimento.{RESET}")
+            print(f"\n{NEGRITO}{VERMELHO}[INFO] ✗ Arquivo '{arquivo}' não encontrado neste experimento.{RESET}")
+#============================================================================================================================
+def testar_inferencia_aleatoria(
+    caminho_modelo="runs/detect/vision_auto_check_bbox/chave_combinada_v4-2/weights/best.pt",
+    pasta_imagens="dataset_chave_combinada/test/images",
+    conf_min=0.40,
+    pasta_saida_nome="teste_inferencia_aleatoria"
+):
+    """
+    Seleciona aleatoriamente uma imagem de uma pasta de teste, executa a inferência 
+    com o modelo treinado e salva o resultado visual de forma robusta.
+    Retorna o caminho da imagem gerada.
+    """
+    print(f"\n{NEGRITO}{AMARELO}[INFO] Carregando modelo: {caminho_modelo}{RESET}")
+    if not Path(caminho_modelo).exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ O arquivo de pesos não foi encontrado em: {caminho_modelo}{RESET}")
+        return None
+        
+    model = YOLO(caminho_modelo)
+    
+    pasta_alvo = Path(pasta_imagens)
+    if not pasta_alvo.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ A pasta de imagens não foi encontrada: {pasta_alvo}{RESET}")
+        return None
+        
+    extensoes = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+    imagens = [p for p in pasta_alvo.iterdir() if p.is_file() and p.suffix in extensoes]
+    
+    if not imagens:
+        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Nenhuma imagem compatível encontrada em '{pasta_alvo}'.{RESET}")
+        return None
+        
+    # Seleciona uma imagem aleatoriamente
+    img_escolhida = random.choice(imagens)
+    print(f"{NEGRITO}{AMARELO}[INFO] Imagem selecionada aleatoriamente: {img_escolhida.name}{RESET}")
+    
+    # Define o diretório absoluto de projeto para evitar duplicações
+    projeto_abs = Path.cwd() / "runs" / "detect"
+    
+    # Executa a predição
+    resultados = model.predict(
+        source=str(img_escolhida), 
+        conf=conf_min, 
+        save=True, 
+        project=str(projeto_abs), 
+        name=pasta_saida_nome, 
+        exist_ok=True
+    )
+    
+    # Verifica se houve detecções
+    num_deteccoes = len(resultados[0].boxes) if resultados else 0
+    if num_deteccoes == 0:
+        print(f"{NEGRITO}{AMARELO}[AVISO] ⚠ O modelo não detectou nenhuma chave nesta imagem com conf >= {conf_min}.{RESET}")
+    else:
+        print(f"{NEGRITO}{VERDE}[INFO] ✓ Detecções realizadas com sucesso: {num_deteccoes} objeto(s) encontrado(s).{RESET}")
+
+    # Limpa o nome base da imagem para busca flexível (removendo parênteses e extensão)
+    nome_base = img_escolhida.stem.split('(')[0].strip()
+    
+    # Localiza o arquivo salvo de forma flexível pelo prefixo do nome base
+    dir_esperado = projeto_abs / pasta_saida_nome
+    imagem_resultado = None
+    
+    if dir_esperado.exists():
+        candidatos_pasta = [p for p in dir_esperado.iterdir() if nome_base in p.name and p.is_file()]
+        if candidatos_pasta:
+            imagem_resultado = max(candidatos_pasta, key=lambda p: p.stat().st_mtime)
+            
+    # Fallback via save_dir oficial do YOLO
+    if not imagem_resultado or not imagem_resultado.exists():
+        if resultados and hasattr(resultados[0], 'save_dir'):
+            candidatos_dir = [p for p in Path(resultados[0].save_dir).iterdir() if nome_base in p.name and p.is_file()]
+            if candidatos_dir:
+                imagem_resultado = max(candidatos_dir, key=lambda p: p.stat().st_mtime)
+                
+    # Fallback global de busca recursiva caso necessário
+    if not imagem_resultado or not imagem_resultado.exists():
+        candidatos_glob = list(projeto_abs.glob(f"**/{img_escolhida.name}"))
+        if candidatos_glob:
+            imagem_resultado = max(candidatos_glob, key=lambda p: p.stat().st_mtime)
+
+    if imagem_resultado and imagem_resultado.exists():
+        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Predição concluída! Salva em: {imagem_resultado}{RESET}")
+        return str(imagem_resultado)
+    else:
+        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ A predição rodou, mas o arquivo de saída não pôde ser mapeado automaticamente.{RESET}")
+        return None
+#============================================================================================================================
+def baixar_dataset_roboflow_direto(
+    api_key: str = "kVAO3w4YX0RTpvX5cA23",
+    workspace_name: str = "plimas-workspace",
+    project_name: str = "alicate",
+    destination_path: str = "./trabalho/datasets/exportados/dataset_alicate_exp",
+    format_type: str = "yolov8"
+):
+    """
+    Exporta diretamente os dados do Roboflow sem gerar versão (economizando créditos).
+    """
+    try:
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Conectando ao workspace '{workspace_name}' e projeto '{project_name}'...{RESET}")
+        rf = Roboflow(api_key=api_key)
+        workspace = rf.workspace(workspace_name)
+        
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Exportando imagens anotadas para: {destination_path}...{RESET}")
+        workspace.search_export(
+            query="*",                     # Traz todas as imagens anotadas
+            format=format_type,            # Formato padrão YOLOv8
+            dataset=project_name,          # ID/Nome do projeto no Roboflow
+            location=destination_path      # Pasta de destino local
+        )
+        
+        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Dataset exportado com sucesso sem gastar créditos de versão!{RESET}")
+        return destination_path
+        
+    except Exception as e:
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha na exportação direta do Roboflow: {e}{RESET}")
+        raise e
+#============================================================================================================================
+
+#============================================================================================================================
+
+#============================================================================================================================
+
 #============================================================================================================================
 
 #============================================================================================================================
