@@ -41,6 +41,7 @@ from ultralytics import (
 )
 
 from roboflow import Roboflow       # Biblioteca para integração com a plataforma Roboflow, que facilita o gerenciamento de datasets e modelos de visão computacional
+
 """
 #=========================================================
 # 💡 02. LEMBRETES
@@ -856,37 +857,121 @@ def testar_inferencia_aleatoria(
         print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ A predição rodou, mas o arquivo de saída não pôde ser mapeado automaticamente.{RESET}")
         return None
 #============================================================================================================================
-def baixar_dataset_roboflow_direto(
+def baixar_dataset_roboflow_versao(
     api_key: str = "kVAO3w4YX0RTpvX5cA23",
     workspace_name: str = "plimas-workspace",
-    project_name: str = "alicate",
-    destination_path: str = "./trabalho/datasets/exportados/dataset_alicate_exp",
+    project_name: str = "alicate-yqke5",
+    versao: int = 1,
+    destination_path: str = "./dataset_alicate_exp",
     format_type: str = "yolov8"
 ):
     """
-    Exporta diretamente os dados do Roboflow sem gerar versão (economizando créditos).
+    Baixa uma versão específica do dataset do Roboflow utilizando o SDK oficial.
     """
     try:
-        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Conectando ao workspace '{workspace_name}' e projeto '{project_name}'...{RESET}")
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Conectando ao workspace '{workspace_name}' e projeto '{project_name}' (Versão {versao})...{RESET}")
         rf = Roboflow(api_key=api_key)
         workspace = rf.workspace(workspace_name)
+        project = workspace.project(project_name)
         
-        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Exportando imagens anotadas para: {destination_path}...{RESET}")
-        workspace.search_export(
-            query="*",                     # Traz todas as imagens anotadas
-            format=format_type,            # Formato padrão YOLOv8
-            dataset=project_name,          # ID/Nome do projeto no Roboflow
-            location=destination_path      # Pasta de destino local
-        )
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Baixando dataset no formato '{format_type}' para: {destination_path}...{RESET}")
+        dataset = project.version(versao).download(format_type, location=destination_path)
         
-        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Dataset exportado com sucesso sem gastar créditos de versão!{RESET}")
+        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Dataset baixado com sucesso em: {destination_path}{RESET}")
         return destination_path
         
     except Exception as e:
-        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha na exportação direta do Roboflow: {e}{RESET}")
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha ao baixar a versão do Roboflow: {e}{RESET}")
         raise e
 #============================================================================================================================
+def unificar_e_reindexar_classe(
+    pasta_origem_dataset: str, 
+    pasta_destino_unificada: str, 
+    mapeamento_classes_mestre: dict
+):
+    """
+    Lê o dataset baixado de uma classe isolada do Roboflow, descobre qual classe é,
+    re-indexa o ID numérico do arquivo .txt para o ID correto do dataset unificado 
+    e copia as imagens/labels para a pasta definitiva.
+    
+    Exemplo de mapeamento_classes_mestre:
+    {
+        "chave_combinada": 0,
+        "alicate": 1,
+        "martelo": 2,
+        "alternador": 3,
+        "bateria": 4,
+        "filtro_oleo": 5,
+        "radiador": 6,
+        "mola_suspensao": 7,
+        "disco_embreagem": 8,
+        "pastilha_freio": 9
+        ...
+    }
+    """
+    origem = Path(pasta_origem_dataset)
+    destino = Path(pasta_destino_unificada)
+    
+    # 1. Descobrir qual classe é este dataset olhando o data.yaml original dele
+    arquivo_yaml_origem = origem / "data.yaml"
+    if not arquivo_yaml_origem.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ data.yaml não encontrado em {origem}{RESET}")
+        return
 
+    with open(arquivo_yaml_origem, 'r') as f:
+        dados_yaml = yaml.safe_load(f)
+    
+    # Pega o nome da classe que está no índice 0 do dataset isolado
+    nome_classe_isolada = dados_yaml['names'][0]
+    
+    if nome_classe_isolada not in mapeamento_classes_mestre:
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ A classe '{nome_classe_isolada}' não está no seu dicionário mestre!{RESET}")
+        return
+        
+    novo_id_correto = mapeamento_classes_mestre[nome_classe_isolada]
+    print(f"{NEGRITO}{VERDE}[UNIFICAÇÃO] Processando classe '{nome_classe_isolada}' (ID antigo: 0 -> Novo ID mestre: {novo_id_correto})...{RESET}")
+
+    # 2. Processar subpastas (train, valid, test se existirem)
+    for split in ['train', 'valid', 'test']:
+        img_origem_dir = origem / split / 'images'
+        lbl_origem_dir = origem / split / 'labels'
+        
+        if not img_origem_dir.exists():
+            continue
+            
+        img_dest_dir = destino / split / 'images'
+        lbl_dest_dir = destino / split / 'labels'
+        
+        img_dest_dir.mkdir(parents=True, exist_ok=True)
+        lbl_dest_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Copiar imagens e re-escrever os labels com o ID correto
+        for img_path in img_origem_dir.glob('*.*'):
+            # Copia imagem
+            shutil.copy(img_path, img_dest_dir / img_path.name)
+            
+            # Procura o label correspondente
+            lbl_path = lbl_origem_dir / f"{img_path.stem}.txt"
+            lbl_dest_path = lbl_dest_dir / f"{img_path.stem}.txt"
+            
+            if lbl_path.exists():
+                linhas_atualizadas = []
+                with open(lbl_path, 'r') as arquivo_txt:
+                    for linha in arquivo_txt.readlines():
+                        partes = linha.strip().split()
+                        if partes:
+                            # Substitui o ID antigo (primeiro elemento) pelo novo ID mestre
+                            partes[0] = str(novo_id_correto)
+                            linhas_atualizadas.append(" ".join(partes))
+                
+                # Salva o arquivo de label com o ID corrigido na pasta unificada
+                with open(lbl_dest_path, 'w') as arquivo_txt_dest:
+                    arquivo_txt_dest.write("\n".join(linhas_atualizadas) + "\n")
+            else:
+                # Caso seja uma imagem sem anotação (fundo), cria um txt vazio ou pula
+                open(lbl_dest_path, 'w').close()
+
+    print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Classe '{nome_classe_isolada}' integrada com sucesso ao dataset unificado!{RESET}")
 #============================================================================================================================
 
 #============================================================================================================================
