@@ -132,34 +132,34 @@ Elencamos os principais motivos para a seleção de escolha da **versão 11 nano
 
 ## 🧱 8. Estrutura do Projeto
 ```text
-├── VisionAutoCheck/
-│   ├── dataset/        	 # Diretório utilizado inicialmente com bounding boxes e segmentação por polígonos
-│   ├── dataset_bbox/            # Diretório secundário utilizado somente com bounding boxes
-│   ├── dataset_completo/        # Diretório Principal de armazenamento das imagens (M)
-│   │   ├── train/     		 # Subdiretório de treino
-│   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
-│   │   │   └── labels/        	 # Subdiretório dos labels das imagens treinadas
-│   │   ├── val/     		 # Subdiretório de validação
-│   │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
-│   │   │   └── labels/        	 # Subdiretório dos labels das imagens validadas
-│   │   └── test/     		 # Subdiretório de teste
-│   │       ├── images/       	 # Subdiretório das imagens a serem testadas
-│   │       └── labels/        	 # Subdiretório dos labels das imagens testadas
-│   ├── runs/                    # Treinamentos do modelo (internamente ficam as versões "best.pt")
-│   └── weights/        	 # Pesos treinados do YOLO (.pt)
-├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
-├── ARQUITETURA.jpg              # Arquitetura/Diagrama da solução
-├── api.ipynb                    # Código principal da API FastAPI
-├── api_vac.py                   # Módulo de funções relacionadas com a API
-├── dataset-prep_bbox.ipynb      # Módulo de detecção das imagens utilizando apenas bounding boxes
-├── dataset-prep_mix.ipynb       # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
-├── funcoes_vac.py               # Módulo de funções deste projeto
-├── LICENSE.txt                  # Licença do código
-├── README.md                    # Leia-me do projeto
-├── requirements.txt             # Relação de bibliotecas e dependências
-├── setup_inicial_vac.ipynb      # Módulo de integração com o GitHub - Criação das branches e atualizações
-├── train_bbox.ipynb             # Módulo de treinamento inicial e utilizando apenas bounding boxes
-└── train_iterativo.ipynb        # Módulo de treinamento principal do modelo
+└── vision-auto-check/
+    ├── dataset/        	 # Diretório utilizado inicialmente com bounding boxes e segmentação por polígonos
+    ├── dataset_bbox/            # Diretório secundário utilizado somente com bounding boxes
+    ├── dataset_completo/        # Diretório Principal de armazenamento das imagens (M)
+    │   ├── train/     		 # Subdiretório de treino
+    │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
+    │   │   └── labels/        	 # Subdiretório dos labels das imagens treinadas
+    │   ├── val/     		 # Subdiretório de validação
+    │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
+    │   │   └── labels/        	 # Subdiretório dos labels das imagens validadas
+    │   └── test/     		 # Subdiretório de teste
+    │       ├── images/       	 # Subdiretório das imagens a serem testadas
+    │       └── labels/        	 # Subdiretório dos labels das imagens testadas
+    ├── runs/                    # Diretório de treinamentos do modelo (internamente ficam as versões "best.pt")
+    ├── weights/        	 # Diretório de pesos treinados do YOLO (.pt)
+    ├── .gitignore                # Relação de arqs que não devem ser levados p/ o  GitHub
+    ├── ARQUITETURA.jpg              # Arquitetura/Diagrama da solução
+    ├── api.ipynb                    # Código principal da API FastAPI
+    ├── api_vac.py                   # Módulo de funções relacionadas com a API
+    ├── dataset-prep_bbox.ipynb      # Módulo de detecção das imagens utilizando apenas bounding boxes
+    ├── dataset-prep_mix.ipynb       # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
+    ├── funcoes_vac.py               # Módulo de funções deste projeto
+    ├── LICENSE.txt                  # Licença do código
+    ├── README.md                    # Leia-me do projeto
+    ├── requirements.txt             # Relação de bibliotecas e dependências
+    ├── setup_inicial_vac.ipynb      # Módulo de integração com o GitHub - Criação das branches e atualizações
+    ├── train_bbox.ipynb             # Módulo de treinamento inicial e utilizando apenas bounding boxes
+    └── train_iterativo.ipynb        # Módulo de treinamento principal do modelo
 ```
 
 O dataset de imagens e os pesos pesados do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train_bbox.ipynb e a API executada via api.py.
