@@ -19,6 +19,8 @@ env/
 # Ignorar pasta de arquivos temporários e grandes do projeto
 dataset/
 dataset_bbox/
+dataset_chave_combinada/
+dataset_completo/
 dataset_exportado/
 trabalho/
 models/
