@@ -589,47 +589,53 @@ def treinar_modelo_yolo(
     print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
     return results
 #============================================================================================================================
-def testar_modelo_yolo(caminho_pesos="vision_auto_check/chave_combinada_v1/weights/best.pt", pasta_teste="dataset/test/images", num_amostras=3, conf_min=0.25):
+def treinar_modelo_yolo(
+    caminho_yaml="./dataset/data.yaml", 
+    modelo_base="yolo11n.pt", 
+    epochs=50,
+    patience=15,            # Equivalente a 50% do número de épocas, para early stopping 
+    imgsz=640, 
+    batch=16, 
+    nome_projeto="vision_auto_check", 
+    nome_experimento="chave_combinada_v1",
+    verbose=True,
+    box=7.5,                # Novo: Ganho da perda de localização (rigor nas caixas)
+    cls=1.5,                # Novo: Ganho da perda de classificação (evita misturar classes)
+    close_mosaic=10         # Novo: Desativa mosaic nas últimas épocas para estabilizar
+):
     """
-    Carrega o modelo treinado (best.pt), realiza a inferência em uma seleção aleatória 
-    de imagens de teste e exibe visualmente o resultado com as bounding boxes.
+    Inicia o treinamento do modelo YOLOv11 utilizando a estrutura de diretórios e o arquivo data.yaml.
+    Suporta fine-tuning, controle de paciência e hiperparâmetros de ajuste para redução de falsos positivos.
     """
-    pesos_path = Path(caminho_pesos)
-    if not pesos_path.exists():
-        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de pesos não encontrado em: {pesos_path}{RESET}")
-        print(f"{NEGRITO}{AMARELO}[INFO] Verifique o caminho exato onde o YOLO salvou o experimento.{RESET}")
-        return
+    yaml_path = Path(caminho_yaml)
+    if not yaml_path.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de configuração não encontrado em: {yaml_path}{RESET}")
+        return None
         
-    print(f"{NEGRITO}{AMARELO}[INFO] 🚀 Carregando modelo treinado de: {pesos_path}{RESET}")
-    model = YOLO(str(pesos_path))
+    print(f"{NEGRITO}{VERDE}[INFO] 🚀 Carregando modelo base: {modelo_base}...{RESET}")
+    model = YOLO(modelo_base)
     
-    pasta_path = Path(pasta_teste)
-    extensoes = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
-    imagens = [p for p in pasta_path.iterdir() if p.suffix in extensoes] if pasta_path.exists() else []
+    print(f"{NEGRITO}{AMARELO}[INFO] 🎯 Iniciando treinamento para o projeto '{nome_projeto}' (Experimento: {nome_experimento})...")
+    print(f"{NEGRITO}{AMARELO}[INFO] Configurações: Épocas={epochs} | Imgsz={imgsz} | Batch={batch} | Box={box} | Cls={cls}\n{RESET}")
     
-    if not imagens:
-        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Nenhuma imagem encontrada em {pasta_path}. Verifique o diretório de teste.{RESET}")
-        return
-        
-    # Seleciona de forma randômica a quantidade definida (padrão = 3)
-    amostras = random.sample(imagens, min(num_amostras, len(imagens)))
-    print(f"{NEGRITO}{AMARELO}[INFO] 🔍 Executando inferência em {len(amostras)} imagens selecionadas aleatoriamente...{RESET}\n")
+    # Executa o treinamento oficial do Ultralytics com os novos hiperparâmetros de rigor
+    results = model.train(
+        data=str(yaml_path),
+        epochs=epochs,
+        patience=patience,
+        imgsz=imgsz,
+        batch=batch,
+        device=0,
+        project=nome_projeto,
+        name=nome_experimento,
+        verbose=verbose,
+        box=box,
+        cls=cls,
+        close_mosaic=close_mosaic
+    )
     
-    for img_path in amostras:
-        # Executa a predição na imagem
-        resultados = model(str(img_path), conf=conf_min, verbose=False)
-        
-        # O método .plot() desenha as caixas de detecção, classes e confianças
-        img_plotada = resultados[0].plot()
-        
-        # Converte de BGR para RGB para exibir corretamente no Matplotlib
-        img_rgb = cv2.cvtColor(img_plotada, cv2.COLOR_BGR2RGB)
-        
-        plt.figure(figsize=(6, 6))
-        plt.imshow(img_rgb)
-        plt.axis("off")
-        plt.title(f"Inferência (best.pt) - {img_path.name}")
-        plt.show()
+    print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
+    return results
 #============================================================================================================================
 def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
     """
