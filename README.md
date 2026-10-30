@@ -78,7 +78,7 @@ Identificação e Escopo da Base de Dados:<br>
 - **Formato:** Imagens em resolução variadas estruturadas nos diretórios de treino (`train`) e validação (`val`) com anotações padronizadas.
 
 ## ✅ 5. A escolha da versão do YOLO
-Elencamos os principais motivos para a seleção de escolha da **versão nano do modelo (yolo11n) do YOLO**:<br>
+Elencamos os principais motivos para a seleção de escolha da **versão 11 nano do modelo YOLO (yolo11n)**:<br>
    - <font color="orange">**Compatibilidade com o Hardware (Recursos de VRAM):**</font> A variante nano (n) é a menor, mais leve e otimizada da família YOLO11. Ela consome muito menos memória de vídeo (VRAM) e poder computacional, rodando de forma fluida nas GPUs disponibilizadas no Colab (como a T4) sem estourar limites de memória.
    - <font color="orange">**Prototipagem Rápida e Validação do Pipeline:**</font> Como as épocas de treinamento fecham muito mais rápido em um modelo nano, conseguimos testar se todo o pipeline de dados — desde a estrutura do arquivo data.yaml até as anotações das 10 classes da oficina automotiva — está funcionando perfeitamente sem precisar gastar horas esperando um modelo pesado treinar.   
    - <font color="orange">**Criação de uma Linha de Base (Baseline):**</font> O modelo yolo11n serve como um ponto de partida rápido para estabelecer métricas iniciais de desempenho (como mAP). Com essa base, validamos se o dataset tem qualidade suficiente antes de decidir investir tempo e poder computacional em modelos maiores (como s, m, l ou x).
@@ -135,7 +135,7 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 ├── VisionAutoCheck/
 │   ├── dataset/        	 # Diretório utilizado inicialmente com bounding boxes e segmentação por polígonos
 │   ├── dataset_bbox/            # Diretório secundário utilizado somente com bounding boxes
-│   ├── dataset_completo/            # Diretório Principal de armazenamento das imagens (M)
+│   ├── dataset_completo/        # Diretório Principal de armazenamento das imagens (M)
 │   │   ├── train/     		 # Subdiretório de treino
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
 │   │   │   └── labels/        	 # Subdiretório dos labels das imagens treinadas
