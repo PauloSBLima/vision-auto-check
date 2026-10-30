@@ -97,12 +97,6 @@ Elencamos os principais motivos para a seleção de escolha da **versão 11 nano
 - **Fase 3: Construção do Backend FastAPI (`feature/fastapi-setup`):**
    Implementação do microserviço em FastAPI, estruturando o endpoint POST `/detect` para receber requisições de arquivos de imagem (`UploadFile`) e retornar a resposta estruturada em JSON.
 
-- **Fase 4: Documentação e Versionamento (`feature/readme-docs`):**
-   Consolidação da documentação técnica no `README.md`, ajustes no Trello e validação final do fluxo com GitFlow (`main` / `develop` / `feature/`).
-
-- **Fase 5: Auditoria e Gravação (`feature/video-recording`):**
-   Gravação do vídeo técnico de apresentação (máximo de 7 minutos) abordando o dataset, demonstração da API via Swagger/Postman, o processo do YOLO, o projeto no Trello e o versionamento do GitHub.
-
 ## 🛠️ 7. Tecnologias e Ferramentas Utilizadas
 - **Linguagem:** Python 3.10+
 - **Framework API:** FastAPI & Uvicorn
