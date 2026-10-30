@@ -167,7 +167,7 @@ Por ser um projeto solo estruturado com metodologia ágil (Kanban/Scrum no Trell
         └── develop/     		  # Branch de desenvolvimento
             ├── feature/dataset-prep      # Branch de preparação do dataset
             ├── feature/fastapi-setup  	  # Branch da API
-            └── feature/yolo-finetuning	  # Branch do YOLO
+            └── feature/yolo-finetuning	  # Branch do Treinamento
 
 Esta estrutura já deve estar preparada lá no GitHub*.
 
@@ -181,8 +181,8 @@ Branchs locais e temporárias poderão aparecer durante o desenvolvimento.
 - Passo Inicial de Configuração e Setup (Google Colab):<br>
 Antes de iniciar os treinamentos ou scripts de desenvolvimento, utilize o notebook de inicialização automatizada `setup_inicial_vac.ipynb` fornecido na raiz do projeto. Ele é responsável por:
    - Configurar as credenciais do Git no ambiente Colab;
-   - Inicializar o repositório local e estruturar as ramificações (main, develop, feature/dataset-prep) conectadas ao GitHub via Token (PAT);
-   - Gerar e versionar automaticamente os arquivos essenciais (requirements.txt, .gitignore e data.yaml configurado para as 20 classes do projeto).
+   - Inicializar o repositório local e estruturar as ramificações (main, develop, feature/dataset-prep, ...) conectadas ao GitHub via Token (PAT);
+   - Gerar e versionar automaticamente os arquivos essenciais (requirements.txt, .gitignore e data.yaml configurado para as 10 classes do projeto).
 
 - Instalação de Dependências (via Notebook ou Terminal):
 
@@ -196,7 +196,7 @@ Antes de iniciar os treinamentos ou scripts de desenvolvimento, utilize o notebo
    Abra o notebook `setup_inicial_vac.ipynb` no Google Colab e execute as células para inicializar o ambiente, configurar as credenciais do Git, versionar os arquivos essenciais (`data.yaml`, `.gitignore`) e sincronizar as branches. O módulo central de utilitários (`funcoes_vac.py`) e os demais scripts do projeto serão carregados diretamente do repositório versionado.
 
    2\. Execução do Pipeline e Treinamento (Fine-Tuning):<br>
-   Com o ambiente configurado e o dataset estruturado, o treinamento do modelo YOLO utilizando as 20 classes de autopeças e ferramentas da oficina pode ser disparado por meio do script de treino principal:
+   Com o ambiente configurado e o dataset estruturado, o treinamento do modelo YOLO utilizando as 10 classes de autopeças e ferramentas da oficina pode ser disparado por meio do script de treino principal:
 
 ```bash
 !python train_iterativo.ipynb
