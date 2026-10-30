@@ -133,18 +133,20 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 ## 🧱 8. Estrutura do Projeto
 ```text
 ├── VisionAutoCheck/
-│   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (estrutura idêntica ao do dataset)
-│   ├── dataset/        	 # Diretório Secundário de armazenamento das imagens
+│   ├── dataset/        	 # Diretório utilizado inicialmente com bounding boxes e segmentação por polígonos
+│   ├── dataset_bbox/            # Diretório secundário utilizado somente com bounding boxes
+│   ├── dataset_completo/            # Diretório Principal de armazenamento das imagens (M)
 │   │   ├── train/     		 # Subdiretório de treino
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
-│   │   │   ├── labels/        	 # Subdiretório dos labels das imagens treinadas
+│   │   │   └── labels/        	 # Subdiretório dos labels das imagens treinadas
 │   │   ├── val/     		 # Subdiretório de validação
 │   │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
-│   │   │   ├── labels/        	 # Subdiretório dos labels das imagens validadas
-│   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (M)
+│   │   │   └── labels/        	 # Subdiretório dos labels das imagens validadas
+│   │   └── test/     		 # Subdiretório de teste
+│   │       ├── images/       	 # Subdiretório das imagens a serem testadas
+│   │       └── labels/        	 # Subdiretório dos labels das imagens testadas
 │   ├── models/        		 # Pesos treinados do YOLO (.pt)
-│   └── runs/                    # Treinamentos do modelo
-│   └── salvos/                  # Modelos treinados salvos
+│   └── runs/                    # Treinamentos do modelo (internamente ficam as versões "best.pt")
 ├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
 ├── ARQUITETURA.jpg              # Arquitetura/Diagrama da solução
 ├── api.ipynb                    # Código principal da API FastAPI
