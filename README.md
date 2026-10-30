@@ -145,8 +145,8 @@ Elencamos os principais motivos para a seleção de escolha da **versão 11 nano
 │   │   └── test/     		 # Subdiretório de teste
 │   │       ├── images/       	 # Subdiretório das imagens a serem testadas
 │   │       └── labels/        	 # Subdiretório dos labels das imagens testadas
-│   ├── models/        		 # Pesos treinados do YOLO (.pt)
-│   └── runs/                    # Treinamentos do modelo (internamente ficam as versões "best.pt")
+│   ├── runs/                    # Treinamentos do modelo (internamente ficam as versões "best.pt")
+│   └── weights/        		   # Pesos treinados do YOLO (.pt)
 ├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
 ├── ARQUITETURA.jpg              # Arquitetura/Diagrama da solução
 ├── api.ipynb                    # Código principal da API FastAPI
