@@ -146,14 +146,18 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 │   └── runs/                    # Treinamentos do modelo
 │   └── salvos/                  # Modelos treinados salvos
 ├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
-├── README.md                    # Leia-me do projeto
-├── funcoes_vac.py               # Módulo de funções deste projeto
-├── requirements.txt             # Relação de bibliotecas e dependências
+├── ARQUITETURA.jpg              # Arquitetura/Diagrama da solução
+├── api.ipynb                    # Código principal da API FastAPI
+├── api_vac.py                   # Módulo de funções relacionadas com a API
 ├── dataset-prep_bbox.ipynb      # Módulo de detecção das imagens utilizando apenas bounding boxes
 ├── dataset-prep_mix.ipynb       # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
-├── train_bbox.ipynb             # Módulo de treinamento utilizando apenas bounding boxes
-├── api_vac.py                   # Módulo de funções relacionadas com a API
-└── api.ipynb                    # Código principal da API FastAPI
+├── funcoes_vac.py               # Módulo de funções deste projeto
+├── LICENSE.txt                  # Licença do código
+├── README.md                    # Leia-me do projeto
+├── requirements.txt             # Relação de bibliotecas e dependências
+├── setup_inicial_vac.ipynb      # Módulo de integração com o GitHub - Criação das branches e atualizações
+├── train_bbox.ipynb             # Módulo de treinamento inicial e utilizando apenas bounding boxes
+└── train_iterativo.ipynb        # Módulo de treinamento principal do modelo
 ```
 
 O dataset de imagens e os pesos pesados do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train_bbox.ipynb e a API executada via api.py.
