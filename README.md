@@ -48,14 +48,14 @@ O `investimento comercial` em um sistema como o **VisionAutoCheck (VAC)** se jus
    * **Do Repositório:** Fornecer um ambiente de consulta prática de um pipeline completo de Visão Computacional e **MLOps** (Machine Learning Operations => Operações de Aprendizado de Máquina). Aqui você encontrará os *scripts* de curadoria, o treinamento de IA baseado em **YOLO**, a API construída em FastAPI e a documentação associada.
 
    * **Dos Módulos:** O fluxo é dividido em etapas integradas:
-      - 1º) **Aquisição e Preparação (Dataset Multiclasse)**: Seleção e estruturação de um dataset contendo 20 classes distintas de uma oficina automotiva/mecânica (peças de motor, suspensão, freios, fluidos e ferramentas de bancada) no padrão compatível com o YOLO.
-      - 2º) **Fine-Tuning com IA (Ultralytics YOLO)**: Carregamento de modelos pré-treinados da família YOLO para realizar ajuste fino (*fine-tuning*) focado em detectar com alta precisão e velocidade os 20 tipos de objetos.
+      - 1º) **Aquisição e Preparação (Dataset Multiclasse)**: Seleção e estruturação de um dataset contendo 10 classes distintas de uma oficina automotiva/mecânica (peças de motor, suspensão, freios, fluidos e ferramentas de bancada) no padrão compatível com o YOLO.
+      - 2º) **Fine-Tuning com IA (Ultralytics YOLO)**: Carregamento de modelos pré-treinados da família YOLO para realizar ajuste fino (*fine-tuning*) focado em detectar com alta precisão e velocidade os 10 tipos de objetos.
       - 3º) **Backend e Endpoint de Inferência (FastAPI)**: Disponibilização de uma API RESTful corporativa contendo um endpoint POST (`/detect`) que recebe uploads de imagens, processa via modelo treinado e retorna um JSON estruturado com as detecções (classes, confianças e *bounding boxes*).
 
 ## 👁‍🗨 4. Visão Geral dos Dados (Data Overview)
 Origem dos Dados (Input): Dataset multiclasse customizado estruturado para o domínio de oficina automotiva.<br>
    * **Conjunto de Dados / Fontes:** Roboflow Universe, Kaggle e variadas da internet.<br><br>
-   * **Diretório de Dados:** https://drive.google.com/drive/folders/14BmA6Q8lnALGOQoqE8rn7uKQm-Mi-nnf?usp=drive_link<br>
+   * **Diretório do Projeto:** https://drive.google.com/drive/folders/1RGH92FIbiyfAdP7jnpLis2nwrd45l6Y6?usp=sharing<br>
 
 Identificação e Escopo da Base de Dados:<br>
 - **Classes Mapeadas (10):** 
@@ -68,19 +68,17 @@ Identificação e Escopo da Base de Dados:<br>
 	   - 03\. alternador
 	   - 04\. bateria
 	   - 05\. filtro_oleo
+      - 06\. radiador
 
    * Suspensão, Freios e Rodas: 
-	   - 06\. mola_suspensao
-	   - 07\. disco_embreagem
-	   - 08\. pastilha_freio
+	   - 07\. mola_suspensao
+	   - 08\. disco_embreagem
+	   - 09\. pastilha_freio
 
-   * Fluidos e Insumos:
-	   - 09\. oleo_motor
-
-- **Formato:** Imagens em resolução variadas estruturadas nos diretórios de treino (`train`) e validação (`val`) com anotações padronizadas.
+- **Formato:** Imagens em resolução variadas estruturadas nos diretórios de treino (`train`), validação (`val`) e teste (`test`) com anotações padronizadas.
 
 ## ✅ 5. A escolha da versão do YOLO
-Elencamos os principais motivos para a seleção de escolha da **versão nano do modelo (yolo11n) do YOLO**:<br>
+Elencamos os principais motivos para a seleção de escolha da **versão 11 nano do modelo YOLO (yolo11n)**:<br>
    - <font color="orange">**Compatibilidade com o Hardware (Recursos de VRAM):**</font> A variante nano (n) é a menor, mais leve e otimizada da família YOLO11. Ela consome muito menos memória de vídeo (VRAM) e poder computacional, rodando de forma fluida nas GPUs disponibilizadas no Colab (como a T4) sem estourar limites de memória.
    - <font color="orange">**Prototipagem Rápida e Validação do Pipeline:**</font> Como as épocas de treinamento fecham muito mais rápido em um modelo nano, conseguimos testar se todo o pipeline de dados — desde a estrutura do arquivo data.yaml até as anotações das 10 classes da oficina automotiva — está funcionando perfeitamente sem precisar gastar horas esperando um modelo pesado treinar.   
    - <font color="orange">**Criação de uma Linha de Base (Baseline):**</font> O modelo yolo11n serve como um ponto de partida rápido para estabelecer métricas iniciais de desempenho (como mAP). Com essa base, validamos se o dataset tem qualidade suficiente antes de decidir investir tempo e poder computacional em modelos maiores (como s, m, l ou x).
@@ -98,12 +96,6 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 
 - **Fase 3: Construção do Backend FastAPI (`feature/fastapi-setup`):**
    Implementação do microserviço em FastAPI, estruturando o endpoint POST `/detect` para receber requisições de arquivos de imagem (`UploadFile`) e retornar a resposta estruturada em JSON.
-
-- **Fase 4: Documentação e Versionamento (`feature/readme-docs`):**
-   Consolidação da documentação técnica no `README.md`, ajustes no Trello e validação final do fluxo com GitFlow (`main` / `develop` / `feature/`).
-
-- **Fase 5: Auditoria e Gravação (`feature/video-recording`):**
-   Gravação do vídeo técnico de apresentação (máximo de 7 minutos) abordando o dataset, demonstração da API via Swagger/Postman, o processo do YOLO, o projeto no Trello e o versionamento do GitHub.
 
 ## 🛠️ 7. Tecnologias e Ferramentas Utilizadas
 - **Linguagem:** Python 3.10+
@@ -134,41 +126,49 @@ Elencamos os principais motivos para a seleção de escolha da **versão nano do
 
 ## 🧱 8. Estrutura do Projeto
 ```text
-├── VisionAutoCheck/
-│   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (estrutura idêntica ao do dataset)
-│   ├── dataset/        	 # Diretório Secundário de armazenamento das imagens
-│   │   ├── train/     		 # Subdiretório de treino
-│   │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
-│   │   │   ├── labels/        	 # Subdiretório dos labels das imagens treinadas
-│   │   ├── val/     		 # Subdiretório de validação
-│   │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
-│   │   │   ├── labels/        	 # Subdiretório dos labels das imagens validadas
-│   ├── dataset_bbox/            # Diretório Principal de armazenamento das imagens (M)
-│   ├── models/        		 # Pesos treinados do YOLO (.pt)
-│   └── runs/                    # Treinamentos do modelo
-│   └── salvos/                  # Modelos treinados salvos
-├── .gitignore                   # Relação de arqs que não devem ser levados p/ o  GitHub
-├── README.md                    # Leia-me do projeto
-├── funcoes_vac.py               # Módulo de funções deste projeto
-├── requirements.txt             # Relação de bibliotecas e dependências
-├── dataset-prep_bbox.ipynb      # Módulo de detecção das imagens utilizando apenas bounding boxes
-├── dataset-prep_mix.ipynb       # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
-├── train_bbox.ipynb             # Módulo de treinamento utilizando apenas bounding boxes
-└── vac.ipynb                    # Código principal da API FastAPI
+└── vision-auto-check/
+    ├── dataset/        	 # Diretório utilizado inicialmente com bounding boxes e segmentação por polígonos
+    ├── dataset_bbox/            # Diretório secundário utilizado somente com bounding boxes
+    ├── dataset_completo/        # Diretório Principal de armazenamento das imagens (M)
+    │   ├── train/     		 # Subdiretório de treino
+    │   │   ├── images/       	 # Subdiretório das imagens a serem treinadas
+    │   │   └── labels/        	 # Subdiretório dos labels das imagens treinadas
+    │   ├── val/     		 # Subdiretório de validação
+    │   │   ├── images/       	 # Subdiretório das imagens a serem validadas
+    │   │   └── labels/        	 # Subdiretório dos labels das imagens validadas
+    │   └── test/     		 # Subdiretório de teste
+    │       ├── images/       	 # Subdiretório das imagens a serem testadas
+    │       └── labels/        	 # Subdiretório dos labels das imagens testadas
+    ├── runs/                    # Diretório de treinamentos do modelo (internamente ficam as versões "best.pt")
+    ├── weights/        	 # Diretório de pesos treinados do YOLO (.pt)
+    ├── .gitignore               # Relação de arqs que não devem ser levados p/ o  GitHub
+    ├── ARQUITETURA.jpg          # Arquitetura/Diagrama da solução
+    ├── api.ipynb                # Código principal da API FastAPI
+    ├── api_vac.py               # Módulo de funções relacionadas com a API
+    ├── dataset-prep_bbox.ipynb  # Módulo de detecção das imagens utilizando apenas bounding boxes
+    ├── dataset-prep_mix.ipynb   # Módulo de detecção das imagens utilizando bounding boxes e segmentação por polígonos
+    ├── funcoes_setup.py         # Módulo de funções do setup
+    ├── funcoes_vac.py           # Módulo de funções deste projeto
+    ├── LICENSE.txt              # Licença do código
+    ├── README.md                # Leia-me do projeto
+    ├── requirements.txt         # Relação de bibliotecas e dependências
+    ├── setup_inicial_vac.ipynb  # Módulo de integração com o GitHub - Criação das branches e atualizações
+    ├── train_bbox.ipynb         # Módulo de treinamento inicial e utilizando apenas bounding boxes
+    └── train_iterativo.ipynb    # Módulo de treinamento principal do modelo
 ```
 
-O dataset de imagens e os pesos pesados do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train_bbox.ipynb e a API executada via api.py.
+Os datasets de imagens, pesos e execuções do modelo não estão incluídos diretamente no repositório por boas práticas de versionamento. O treinamento pode ser reproduzido via train_iterativo.ipynb e a API executada via api.ipynb.
 
 ## ▶ 9. Passo a Passo (Git Flow & Google Colab)
 Por ser um projeto solo estruturado com metodologia ágil (Kanban/Scrum no Trello) e GitFlow, o desenvolvimento é realizado **`utilizando o Google Colab (com suporte a GPU)`** para os treinamentos e manipulação de IA, e o versionamento via comandos Git integrados (onde o fluxo de desenvolvimento separa as entregas em branches de features ramificadas a partir da develop e consolidadas na main.<br>
 - Estrutura de Branches (5):<br>
 ```text
-├── VisionAutoCheck/
-│   └── main/        		          # Branch principal
-│       └── develop/     		  # Branch de desenvolvimento
-│           ├── feature/dataset-prep      # Branch de preparação do dataset
-│           ├── feature/fastapi-setup  	  # Branch da API
-│           └── feature/yolo-finetuning	  # Branch do YOLO
+└── VisionAutoCheck/
+    └── main/        		          # Branch principal
+        └── develop/     		  # Branch de desenvolvimento
+            ├── feature/dataset-prep      # Branch de preparação do dataset
+            ├── feature/fastapi-setup  	  # Branch da API
+            └── feature/yolo-finetuning	  # Branch do Treinamento
 
 Esta estrutura já deve estar preparada lá no GitHub*.
 
@@ -182,8 +182,8 @@ Branchs locais e temporárias poderão aparecer durante o desenvolvimento.
 - Passo Inicial de Configuração e Setup (Google Colab):<br>
 Antes de iniciar os treinamentos ou scripts de desenvolvimento, utilize o notebook de inicialização automatizada `setup_inicial_vac.ipynb` fornecido na raiz do projeto. Ele é responsável por:
    - Configurar as credenciais do Git no ambiente Colab;
-   - Inicializar o repositório local e estruturar as ramificações (main, develop, feature/dataset-prep) conectadas ao GitHub via Token (PAT);
-   - Gerar e versionar automaticamente os arquivos essenciais (requirements.txt, .gitignore e data.yaml configurado para as 20 classes do projeto).
+   - Inicializar o repositório local e estruturar as ramificações (main, develop, feature/dataset-prep, ...) conectadas ao GitHub via Token (PAT);
+   - Gerar e versionar automaticamente os arquivos essenciais (requirements.txt, .gitignore e data.yaml configurado para as 10 classes do projeto).
 
 - Instalação de Dependências (via Notebook ou Terminal):
 
@@ -197,18 +197,18 @@ Antes de iniciar os treinamentos ou scripts de desenvolvimento, utilize o notebo
    Abra o notebook `setup_inicial_vac.ipynb` no Google Colab e execute as células para inicializar o ambiente, configurar as credenciais do Git, versionar os arquivos essenciais (`data.yaml`, `.gitignore`) e sincronizar as branches. O módulo central de utilitários (`funcoes_vac.py`) e os demais scripts do projeto serão carregados diretamente do repositório versionado.
 
    2\. Execução do Pipeline e Treinamento (Fine-Tuning):<br>
-   Com o ambiente configurado e o dataset estruturado, o treinamento do modelo YOLO utilizando as 20 classes de autopeças e ferramentas da oficina pode ser disparado por meio do script de treino principal:
+   Com o ambiente configurado e o dataset estruturado, o treinamento do modelo YOLO utilizando as 10 classes de autopeças e ferramentas da oficina pode ser disparado por meio do script de treino principal:
 
 ```bash
-!python train_bbox.ipynb
+!python train_iterativo.ipynb
 ```
 
 - Execução da API FastAPI:<br>
 Nota: Para expor a API FastAPI a partir do ambiente do Colab para testes externos ou via Swagger, recomenda-se o uso de ferramentas de túnel como o ngrok ou a execução local controlada:
 ```bash
-!uvicorn main:app --reload
+!python api.ipynb
 ```
-Acesse a documentação interativa em: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Acesse a documentação interativa em: [https://snuggle-lyricism-outlying.ngrok-free.dev/](https://snuggle-lyricism-outlying.ngrok-free.dev/)
 
 - Exemplo de Payload JSON de Retorno esperado (/detect):<br>
 <BR>JSON
