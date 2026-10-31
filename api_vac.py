@@ -52,7 +52,8 @@ app = FastAPI(
 # Mapeamento técnico dos arquivos de modelo
 MAPA_MODELOS = {
     #'vac': 'runs/detect/vision_auto_check_bbox/chave_combinada_v4-2/weights/best.pt',
-    'vac': 'runs/detect/vision_auto_check_bbox/completo_v1/weights/best.pt',    
+    #'vac': 'runs/detect/vision_auto_check_bbox/completo_v1/weights/best.pt',    
+    'vac': 'runs/detect/vision_auto_check_bbox/completo_v2/weights/best.pt',    
     '1': 'yolov8n.pt', '2': 'yolov8s.pt', '3': 'yolov8m.pt', '4': 'yolov8l.pt', '5': 'yolov8x.pt',
     '6': 'yolov8n-oiv7.pt', '7': 'yolov8s-oiv7.pt', '8': 'yolov8m-oiv7.pt', '9': 'yolov8l-oiv7.pt', '10': 'yolov8x-oiv7.pt',
     '11': 'yolo11n.pt', '12': 'yolo11s.pt', '13': 'yolo11m.pt', '14': 'yolo11l.pt', '15': 'yolo11x.pt',
