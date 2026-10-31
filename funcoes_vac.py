@@ -557,47 +557,6 @@ def treinar_modelo_yolo(
     batch=16, 
     nome_projeto="vision_auto_check", 
     nome_experimento="chave_combinada_v1",
-    verbose=True
-):
-    """
-    Inicia o treinamento do modelo YOLOv11 utilizando a estrutura de diretórios e o arquivo data.yaml.
-    """
-    yaml_path = Path(caminho_yaml)
-    if not yaml_path.exists():
-        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de configuração não encontrado em: {yaml_path}{RESET}")
-        return None
-        
-    print(f"{NEGRITO}{VERDE}[INFO] 🚀 Carregando modelo base: {modelo_base}...{RESET}")
-    model = YOLO(modelo_base)
-    
-    print(f"{NEGRITO}{AMARELO}[INFO] 🎯 Iniciando treinamento para o projeto '{nome_projeto}' (Experimento: {nome_experimento})...")
-    print(f"{NEGRITO}{AMARELO}[INFO] Configurações: Épocas={epochs} | Imgsz={imgsz} | Batch={batch}\n{RESET}")
-    
-    # Executa o treinamento oficial do Ultralytics
-    results = model.train(
-        data=str(yaml_path),
-        epochs=epochs,
-        patience=patience,
-        imgsz=imgsz,
-        batch=batch,
-        device=0,
-        project=nome_projeto,
-        name=nome_experimento,
-        verbose=True
-    )
-    
-    print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
-    return results
-#============================================================================================================================
-def treinar_modelo_yolo(
-    caminho_yaml="./dataset/data.yaml", 
-    modelo_base="yolo11n.pt", 
-    epochs=50,
-    patience=15,            # Equivalente a 50% do número de épocas, para early stopping 
-    imgsz=640, 
-    batch=16, 
-    nome_projeto="vision_auto_check", 
-    nome_experimento="chave_combinada_v1",
     verbose=True,
     box=7.5,                # Novo: Ganho da perda de localização (rigor nas caixas)
     cls=1.5,                # Novo: Ganho da perda de classificação (evita misturar classes)
