@@ -30,6 +30,18 @@ import yaml                         # Biblioteca para manipulação de arquivos 
 import numpy as np                  # Biblioteca para manipulação de arrays e operações matemáticas (útil para cálculos com coordenadas de bounding boxes)
 import shutil                       # Biblioteca para operações de alto nível em arquivos e diretórios (como copiar arquivos)
 
+from IPython.display import (
+    Image, 
+    display
+)                                   # Biblioteca para exibir imagens diretamente em notebooks Jupyter
+
+from ultralytics import (
+    YOLO,                           # Biblioteca para trabalhar com modelos YOLO (You Only Look Once) de detecção de objetos
+    YOLOWorld                       # Biblioteca para trabalhar com modelos YOLO-World, que permitem detecção de objetos baseada em texto (prompt text)
+)
+
+from roboflow import Roboflow       # Biblioteca para integração com a plataforma Roboflow, que facilita o gerenciamento de datasets e modelos de visão computacional
+
 """
 #=========================================================
 # 💡 02. LEMBRETES
@@ -301,13 +313,29 @@ def carregar_mapeamento_classes(caminho_yaml):
         dados = yaml.safe_load(f)
     return dados.get("names", None)
 #============================================================================================================================
-def gerar_labels_automaticos_dataset(pasta_base="dataset", modelo_base="yolo11n.pt", conf_min=0.25):
+def gerar_labels_automaticos_dataset(
+    pasta_base="dataset_bbox", 
+    modelo_base="yolov8s-worldv2.pt", 
+    classes=["chave", "chave combinada"], 
+    conf_min=0.25
+):
     """
     Percorre as pastas de treino e validação do dataset e gera os arquivos .txt
-    no formato YOLO utilizando um modelo base para auto-labeling.
+    no formato YOLO. Detecta automaticamente se deve usar YOLO padrão ou YOLO-World.
     """
-    print(f"{NEGRITO}{AMARELO}[INFO] Carregando modelo base {NEGRITO}{VERDE}{modelo_base}{NEGRITO}{AMARELO} para auto-labeling...{RESET}")
-    modelo = YOLO(modelo_base)
+    print(f"{NEGRITO}{AMARELO}[INFO] Carregando modelo {NEGRITO}{VERDE}{modelo_base}{NEGRITO}{AMARELO} para auto-labeling...{RESET}")
+    
+    # Identifica dinamicamente se o modelo é YOLO-World pelo nome ou classe
+    is_world = "world" in modelo_base.lower()
+    
+    if is_world:
+        modelo = YOLOWorld(modelo_base)
+        print(f"{NEGRITO}{AMARELO}[INFO] YOLO-World detectado. Definindo classes de vocabulário: {classes}{RESET}")
+        modelo.set_classes(classes)
+    else:
+        # Se for um modelo YOLO padrão (ex: yolo11n.pt)
+        modelo = YOLO(modelo_base)
+        print(f"{NEGRITO}{AMARELO}[INFO] YOLO Padrão detectado. Usando classes nativas do modelo.{RESET}")
     
     subpastas = ["train", "val"]
     
@@ -339,8 +367,8 @@ def gerar_labels_automaticos_dataset(pasta_base="dataset", modelo_base="yolo11n.
                 # Coordenadas normalizadas para o formato YOLO (centro_x, centro_y, largura, altura)
                 box_norm = box.xywhn[0].cpu().numpy()
                 
-                # ID 0 para a primeira classe (chave_combinada)
-                classe_id = 0 
+                # Se for YOLO-World ou YOLO padrão, extrai o ID da classe detectada
+                classe_id = int(box.cls[0].item()) if hasattr(box, 'cls') and len(box.cls) > 0 else 0
                 
                 x_cent, y_cent, largura, altura = box_norm
                 linhas_label.append(f"{classe_id} {x_cent:.6f} {y_cent:.6f} {largura:.6f} {altura:.6f}\n")
@@ -476,7 +504,7 @@ def visualizar_amostras_labels(pasta_base="dataset", split="train", num_amostras
                 # Texto em preto sobre fundo verde
                 cv2.putText(img, texto_label, (xmin + 3, pos_y - 2), cv2.FONT_HERSHEY_SIMPLEX, escala_fonte, (0, 0, 0), espessura_fonte)
         else:
-            print(f"{NEGRITO}{VERMELHO}[AVISO] Arquivo .txt não encontrado para: {img_path.name}{RESET}")
+            print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Arquivo .txt não encontrado para: {img_path.name}{RESET}")
             
         if salvar_disco:
             caminho_saida = pasta_bbox / img_path.name
@@ -524,7 +552,7 @@ def treinar_modelo_yolo(
     caminho_yaml="./dataset/data.yaml", 
     modelo_base="yolo11n.pt", 
     epochs=50,
-    patience=25,            # Equivalente a 50% do número de épocas, para early stopping 
+    patience=15,            # Equivalente a 50% do número de épocas, para early stopping 
     imgsz=640, 
     batch=16, 
     nome_projeto="vision_auto_check", 
@@ -561,47 +589,53 @@ def treinar_modelo_yolo(
     print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
     return results
 #============================================================================================================================
-def testar_modelo_yolo(caminho_pesos="vision_auto_check/chave_combinada_v1/weights/best.pt", pasta_teste="dataset/test/images", num_amostras=3, conf_min=0.25):
+def treinar_modelo_yolo(
+    caminho_yaml="./dataset/data.yaml", 
+    modelo_base="yolo11n.pt", 
+    epochs=50,
+    patience=15,            # Equivalente a 50% do número de épocas, para early stopping 
+    imgsz=640, 
+    batch=16, 
+    nome_projeto="vision_auto_check", 
+    nome_experimento="chave_combinada_v1",
+    verbose=True,
+    box=7.5,                # Novo: Ganho da perda de localização (rigor nas caixas)
+    cls=1.5,                # Novo: Ganho da perda de classificação (evita misturar classes)
+    close_mosaic=10         # Novo: Desativa mosaic nas últimas épocas para estabilizar
+):
     """
-    Carrega o modelo treinado (best.pt), realiza a inferência em uma seleção aleatória 
-    de imagens de teste e exibe visualmente o resultado com as bounding boxes.
+    Inicia o treinamento do modelo YOLOv11 utilizando a estrutura de diretórios e o arquivo data.yaml.
+    Suporta fine-tuning, controle de paciência e hiperparâmetros de ajuste para redução de falsos positivos.
     """
-    pesos_path = Path(caminho_pesos)
-    if not pesos_path.exists():
-        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de pesos não encontrado em: {pesos_path}{RESET}")
-        print(f"{NEGRITO}{AMARELO}[INFO] Verifique o caminho exato onde o YOLO salvou o experimento.{RESET}")
-        return
+    yaml_path = Path(caminho_yaml)
+    if not yaml_path.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de configuração não encontrado em: {yaml_path}{RESET}")
+        return None
         
-    print(f"{NEGRITO}{AMARELO}[INFO] 🚀 Carregando modelo treinado de: {pesos_path}{RESET}")
-    model = YOLO(str(pesos_path))
+    print(f"{NEGRITO}{VERDE}[INFO] 🚀 Carregando modelo base: {modelo_base}...{RESET}")
+    model = YOLO(modelo_base)
     
-    pasta_path = Path(pasta_teste)
-    extensoes = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
-    imagens = [p for p in pasta_path.iterdir() if p.suffix in extensoes] if pasta_path.exists() else []
+    print(f"{NEGRITO}{AMARELO}[INFO] 🎯 Iniciando treinamento para o projeto '{nome_projeto}' (Experimento: {nome_experimento})...")
+    print(f"{NEGRITO}{AMARELO}[INFO] Configurações: Épocas={epochs} | Imgsz={imgsz} | Batch={batch} | Box={box} | Cls={cls}\n{RESET}")
     
-    if not imagens:
-        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Nenhuma imagem encontrada em {pasta_path}. Verifique o diretório de teste.{RESET}")
-        return
-        
-    # Seleciona de forma randômica a quantidade definida (padrão = 3)
-    amostras = random.sample(imagens, min(num_amostras, len(imagens)))
-    print(f"{NEGRITO}{AMARELO}[INFO] 🔍 Executando inferência em {len(amostras)} imagens selecionadas aleatoriamente...{RESET}\n")
+    # Executa o treinamento oficial do Ultralytics com os novos hiperparâmetros de rigor
+    results = model.train(
+        data=str(yaml_path),
+        epochs=epochs,
+        patience=patience,
+        imgsz=imgsz,
+        batch=batch,
+        device=0,
+        project=nome_projeto,
+        name=nome_experimento,
+        verbose=verbose,
+        box=box,
+        cls=cls,
+        close_mosaic=close_mosaic
+    )
     
-    for img_path in amostras:
-        # Executa a predição na imagem
-        resultados = model(str(img_path), conf=conf_min, verbose=False)
-        
-        # O método .plot() desenha as caixas de detecção, classes e confianças
-        img_plotada = resultados[0].plot()
-        
-        # Converte de BGR para RGB para exibir corretamente no Matplotlib
-        img_rgb = cv2.cvtColor(img_plotada, cv2.COLOR_BGR2RGB)
-        
-        plt.figure(figsize=(6, 6))
-        plt.imshow(img_rgb)
-        plt.axis("off")
-        plt.title(f"Inferência (best.pt) - {img_path.name}")
-        plt.show()
+    print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
+    return results
 #============================================================================================================================
 def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
     """
@@ -646,7 +680,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
             if destino_split_dir.exists():
                 shutil.rmtree(destino_split_dir)
             shutil.copytree(origem_split_dir, destino_split_dir)
-            print(f"{NEGRITO}{VERDE}  [SUCESSO] Diretório 'test' copiado integralmente.{RESET}")
+            print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Diretório 'test' copiado integralmente.{RESET}")
             continue
 
         # Para train e val, aplicamos a filtragem rigorosa de Bounding Boxes
@@ -684,12 +718,12 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                             break
                         linhas_validas.append(linha_limpa)
             except Exception as e:
-                print(f"{NEGRITO}{VERMELHO}  [ERRO] Falha ao ler {txt_path.name}: {e}{RESET}")
+                print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha ao ler {txt_path.name}: {e}{RESET}")
                 continue
             
             # Se não for puramente bounding box ou estiver vazio, ignora
             if not is_pure_bbox or not linhas_validas:
-                print(f"{NEGRITO}{g_azul_claro}  [IGNORADO] {txt_path.name} contém polígonos (segmentação).{RESET}")
+                print(f"{NEGRITO}{g_azul_claro}[IGNORADO] {txt_path.name} contém polígonos (segmentação).{RESET}")
                 total_ignorados += 1
                 continue
             
@@ -702,7 +736,7 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
                     break
             
             if img_encontrada is None:
-                print(f"{NEGRITO}{VERMELHO}  [AVISO] Imagem para {txt_path.name} não foi encontrada.{RESET}")
+                print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Imagem para {txt_path.name} não foi encontrada.{RESET}")
                 continue
             
             # Copia o label e a imagem válida para o novo dataset_bbox
@@ -715,6 +749,237 @@ def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
     print(f"{NEGRITO}{AMARELO}  - Total de arquivos copiados (Puros): {total_copiados}{RESET}")
     print(f"{NEGRITO}{AMARELO}  - Total de arquivos ignorados (Segmentação): {total_ignorados}{RESET}")
     print(f"==========================================")
+#============================================================================================================================
+def exibir_resultados_experimento(nome_projeto="vision_auto_check_bbox", nome_experimento="chave_combinada_v3", base_dir="runs/detect"):
+    """
+    Exibe de forma automática as principais imagens de resultado geradas pelo YOLO:
+    - Predições no lote de validação (val_batch0_pred.jpg)
+    - Gráficos de treinamento e perdas (results.png)
+    - Matriz de confusão (confusion_matrix.png)
+    """
+    caminho_exp = os.path.join(base_dir, nome_projeto, nome_experimento)
+    
+    if not os.path.exists(caminho_exp):
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ O diretório do experimento não foi encontrado em: {caminho_exp}{RESET}")
+        return
+
+    arquivos_interesse = {
+        "🔍 Predições no Lote de Validação (val_batch0_pred.jpg)": "val_batch0_pred.jpg",
+        "📈 Gráficos de Desempenho e Loss (results.png)": "results.png",
+        "📊 Matriz de Confusão (confusion_matrix.png)": "confusion_matrix.png"
+    }
+
+    for titulo, arquivo in arquivos_interesse.items():
+        caminho_arquivo = os.path.join(caminho_exp, arquivo)
+        if os.path.exists(caminho_arquivo):
+            print(f"\n{titulo}")
+            display(Image(filename=caminho_arquivo))
+        else:
+            print(f"\n{NEGRITO}{VERMELHO}[INFO] ✗ Arquivo '{arquivo}' não encontrado neste experimento.{RESET}")
+#============================================================================================================================
+def testar_inferencia_aleatoria(
+    caminho_modelo="runs/detect/vision_auto_check_bbox/chave_combinada_v4-2/weights/best.pt",
+    pasta_imagens="dataset_chave_combinada/test/images",
+    conf_min=0.40,
+    pasta_saida_nome="teste_inferencia_aleatoria"
+):
+    """
+    Seleciona aleatoriamente uma imagem de uma pasta de teste, executa a inferência 
+    com o modelo treinado e salva o resultado visual de forma robusta.
+    Retorna o caminho da imagem gerada.
+    """
+    print(f"\n{NEGRITO}{AMARELO}[INFO] Carregando modelo: {caminho_modelo}{RESET}")
+    if not Path(caminho_modelo).exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ O arquivo de pesos não foi encontrado em: {caminho_modelo}{RESET}")
+        return None
+        
+    model = YOLO(caminho_modelo)
+    
+    pasta_alvo = Path(pasta_imagens)
+    if not pasta_alvo.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ A pasta de imagens não foi encontrada: {pasta_alvo}{RESET}")
+        return None
+        
+    extensoes = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+    imagens = [p for p in pasta_alvo.iterdir() if p.is_file() and p.suffix in extensoes]
+    
+    if not imagens:
+        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Nenhuma imagem compatível encontrada em '{pasta_alvo}'.{RESET}")
+        return None
+        
+    # Seleciona uma imagem aleatoriamente
+    img_escolhida = random.choice(imagens)
+    print(f"{NEGRITO}{AMARELO}[INFO] Imagem selecionada aleatoriamente: {img_escolhida.name}{RESET}")
+    
+    # Define o diretório absoluto de projeto para evitar duplicações
+    projeto_abs = Path.cwd() / "runs" / "detect"
+    
+    # Executa a predição
+    resultados = model.predict(
+        source=str(img_escolhida), 
+        conf=conf_min, 
+        save=True, 
+        project=str(projeto_abs), 
+        name=pasta_saida_nome, 
+        exist_ok=True
+    )
+    
+    # Verifica se houve detecções
+    num_deteccoes = len(resultados[0].boxes) if resultados else 0
+    if num_deteccoes == 0:
+        print(f"{NEGRITO}{AMARELO}[AVISO] ⚠ O modelo não detectou nenhuma chave nesta imagem com conf >= {conf_min}.{RESET}")
+    else:
+        print(f"{NEGRITO}{VERDE}[INFO] ✓ Detecções realizadas com sucesso: {num_deteccoes} objeto(s) encontrado(s).{RESET}")
+
+    # Limpa o nome base da imagem para busca flexível (removendo parênteses e extensão)
+    nome_base = img_escolhida.stem.split('(')[0].strip()
+    
+    # Localiza o arquivo salvo de forma flexível pelo prefixo do nome base
+    dir_esperado = projeto_abs / pasta_saida_nome
+    imagem_resultado = None
+    
+    if dir_esperado.exists():
+        candidatos_pasta = [p for p in dir_esperado.iterdir() if nome_base in p.name and p.is_file()]
+        if candidatos_pasta:
+            imagem_resultado = max(candidatos_pasta, key=lambda p: p.stat().st_mtime)
+            
+    # Fallback via save_dir oficial do YOLO
+    if not imagem_resultado or not imagem_resultado.exists():
+        if resultados and hasattr(resultados[0], 'save_dir'):
+            candidatos_dir = [p for p in Path(resultados[0].save_dir).iterdir() if nome_base in p.name and p.is_file()]
+            if candidatos_dir:
+                imagem_resultado = max(candidatos_dir, key=lambda p: p.stat().st_mtime)
+                
+    # Fallback global de busca recursiva caso necessário
+    if not imagem_resultado or not imagem_resultado.exists():
+        candidatos_glob = list(projeto_abs.glob(f"**/{img_escolhida.name}"))
+        if candidatos_glob:
+            imagem_resultado = max(candidatos_glob, key=lambda p: p.stat().st_mtime)
+
+    if imagem_resultado and imagem_resultado.exists():
+        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Predição concluída! Salva em: {imagem_resultado}{RESET}")
+        return str(imagem_resultado)
+    else:
+        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ A predição rodou, mas o arquivo de saída não pôde ser mapeado automaticamente.{RESET}")
+        return None
+#============================================================================================================================
+def baixar_dataset_roboflow_versao(
+    api_key: str = "kVAO3w4YX0RTpvX5cA23",
+    workspace_name: str = "plimas-workspace",
+    project_name: str = "alicate-yqke5",
+    versao: int = 1,
+    destination_path: str = "./dataset_alicate_exp",
+    format_type: str = "yolov8"
+):
+    """
+    Baixa uma versão específica do dataset do Roboflow utilizando o SDK oficial.
+    """
+    try:
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Conectando ao workspace '{workspace_name}' e projeto '{project_name}' (Versão {versao})...{RESET}")
+        rf = Roboflow(api_key=api_key)
+        workspace = rf.workspace(workspace_name)
+        project = workspace.project(project_name)
+        
+        print(f"{NEGRITO}{AMARELO}[ROBOFLOW] Baixando dataset no formato '{format_type}' para: {destination_path}...{RESET}")
+        dataset = project.version(versao).download(format_type, location=destination_path)
+        
+        print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Dataset baixado com sucesso em: {destination_path}{RESET}")
+        return destination_path
+        
+    except Exception as e:
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Falha ao baixar a versão do Roboflow: {e}{RESET}")
+        raise e
+#============================================================================================================================
+def unificar_e_reindexar_classe(
+    pasta_origem_dataset: str, 
+    pasta_destino_unificada: str, 
+    mapeamento_classes_mestre: dict
+):
+    """
+    Lê o dataset baixado de uma classe isolada do Roboflow, descobre qual classe é,
+    re-indexa o ID numérico do arquivo .txt para o ID correto do dataset unificado 
+    e copia as imagens/labels para a pasta definitiva.
+    
+    Exemplo de mapeamento_classes_mestre:
+    {
+        "chave_combinada": 0,
+        "alicate": 1,
+        "martelo": 2,
+        "alternador": 3,
+        "bateria": 4,
+        "filtro_oleo": 5,
+        "radiador": 6,
+        "mola_suspensao": 7,
+        "disco_embreagem": 8,
+        "pastilha_freio": 9
+        ...
+    }
+    """
+    origem = Path(pasta_origem_dataset)
+    destino = Path(pasta_destino_unificada)
+    
+    # 1. Descobrir qual classe é este dataset olhando o data.yaml original dele
+    arquivo_yaml_origem = origem / "data.yaml"
+    if not arquivo_yaml_origem.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ data.yaml não encontrado em {origem}{RESET}")
+        return
+
+    with open(arquivo_yaml_origem, 'r') as f:
+        dados_yaml = yaml.safe_load(f)
+    
+    # Pega o nome da classe que está no índice 0 do dataset isolado
+    nome_classe_isolada = dados_yaml['names'][0]
+    
+    if nome_classe_isolada not in mapeamento_classes_mestre:
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ A classe '{nome_classe_isolada}' não está no seu dicionário mestre!{RESET}")
+        return
+        
+    novo_id_correto = mapeamento_classes_mestre[nome_classe_isolada]
+    print(f"{NEGRITO}{VERDE}[UNIFICAÇÃO] Processando classe '{nome_classe_isolada}' (ID antigo: 0 -> Novo ID mestre: {novo_id_correto})...{RESET}")
+
+    # 2. Processar subpastas (train, valid, test se existirem)
+    for split in ['train', 'valid', 'test']:
+        img_origem_dir = origem / split / 'images'
+        lbl_origem_dir = origem / split / 'labels'
+        
+        if not img_origem_dir.exists():
+            continue
+            
+        img_dest_dir = destino / split / 'images'
+        lbl_dest_dir = destino / split / 'labels'
+        
+        img_dest_dir.mkdir(parents=True, exist_ok=True)
+        lbl_dest_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Copiar imagens e re-escrever os labels com o ID correto
+        for img_path in img_origem_dir.glob('*.*'):
+            # Copia imagem
+            shutil.copy(img_path, img_dest_dir / img_path.name)
+            
+            # Procura o label correspondente
+            lbl_path = lbl_origem_dir / f"{img_path.stem}.txt"
+            lbl_dest_path = lbl_dest_dir / f"{img_path.stem}.txt"
+            
+            if lbl_path.exists():
+                linhas_atualizadas = []
+                with open(lbl_path, 'r') as arquivo_txt:
+                    for linha in arquivo_txt.readlines():
+                        partes = linha.strip().split()
+                        if partes:
+                            # Substitui o ID antigo (primeiro elemento) pelo novo ID mestre
+                            partes[0] = str(novo_id_correto)
+                            linhas_atualizadas.append(" ".join(partes))
+                
+                # Salva o arquivo de label com o ID corrigido na pasta unificada
+                with open(lbl_dest_path, 'w') as arquivo_txt_dest:
+                    arquivo_txt_dest.write("\n".join(linhas_atualizadas) + "\n")
+            else:
+                # Caso seja uma imagem sem anotação (fundo), cria um txt vazio ou pula
+                open(lbl_dest_path, 'w').close()
+
+    print(f"{NEGRITO}{VERDE}[SUCESSO] ✓ Classe '{nome_classe_isolada}' integrada com sucesso ao dataset unificado!{RESET}")
+#============================================================================================================================
+
 #============================================================================================================================
 
 #============================================================================================================================
