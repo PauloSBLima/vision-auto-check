@@ -596,6 +596,48 @@ def treinar_modelo_yolo(
     print(f"{NEGRITO}{VERDE}[SUCESSO] ✨ Treinamento concluído! Os pesos e métricas foram salvos em '{nome_projeto}/{nome_experimento}'{RESET}")
     return results
 #============================================================================================================================
+def testar_modelo_yolo(caminho_pesos="vision_auto_check/chave_combinada_v1/weights/best.pt", pasta_teste="dataset/test/images", num_amostras=3, conf_min=0.25):
+    """
+    Carrega o modelo treinado (best.pt), realiza a inferência em uma seleção aleatória 
+    de imagens de teste e exibe visualmente o resultado com as bounding boxes.
+    """
+    pesos_path = Path(caminho_pesos)
+    if not pesos_path.exists():
+        print(f"{NEGRITO}{VERMELHO}[ERRO] ✗ Arquivo de pesos não encontrado em: {pesos_path}{RESET}")
+        print(f"{NEGRITO}{AMARELO}[INFO] Verifique o caminho exato onde o YOLO salvou o experimento.{RESET}")
+        return
+        
+    print(f"{NEGRITO}{AMARELO}[INFO] 🚀 Carregando modelo treinado de: {pesos_path}{RESET}")
+    model = YOLO(str(pesos_path))
+    
+    pasta_path = Path(pasta_teste)
+    extensoes = [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]
+    imagens = [p for p in pasta_path.iterdir() if p.suffix in extensoes] if pasta_path.exists() else []
+    
+    if not imagens:
+        print(f"{NEGRITO}{VERMELHO}[AVISO] ✗ Nenhuma imagem encontrada em {pasta_path}. Verifique o diretório de teste.{RESET}")
+        return
+        
+    # Seleciona de forma randômica a quantidade definida (padrão = 3)
+    amostras = random.sample(imagens, min(num_amostras, len(imagens)))
+    print(f"{NEGRITO}{AMARELO}[INFO] 🔍 Executando inferência em {len(amostras)} imagens selecionadas aleatoriamente...{RESET}\n")
+    
+    for img_path in amostras:
+        # Executa a predição na imagem
+        resultados = model(str(img_path), conf=conf_min, verbose=False)
+        
+        # O método .plot() desenha as caixas de detecção, classes e confianças
+        img_plotada = resultados[0].plot()
+        
+        # Converte de BGR para RGB para exibir corretamente no Matplotlib
+        img_rgb = cv2.cvtColor(img_plotada, cv2.COLOR_BGR2RGB)
+        
+        plt.figure(figsize=(6, 6))
+        plt.imshow(img_rgb)
+        plt.axis("off")
+        plt.title(f"Inferência (best.pt) - {img_path.name}")
+        plt.show()
+#============================================================================================================================
 def gerar_dataset_bbox(origem="dataset", destino="dataset_bbox"):
     """
     Varre o dataset original e cria um novo (dataset_bbox) contendo apenas
