@@ -106,22 +106,26 @@ Elencamos os principais motivos para a seleção de escolha da **versão 11 nano
 - **Controle de Versão:** Git e GitHub (GitFlow)
 - **Bibliotecas Principais:**
    * **- Core e Processamento Numérico**
-      - numpy >= 1.23.0
+      - numpy >= 2.1.3
    * **- Visualização Gráfica**
-      - matplotlib >= 3.5.0
-      - seaborn >= 0.12.0
-   * **- IA e Visão Computacional**   
-      - ultralytics >= 8.0.0
-      - opencv-python >= 4.8.0
-   * **- Backend / API**
-      - fastapi >= 0.100.0
-      - uvicorn >= 0.22.0
-      - python-multipart >= 0.0.6
-   * **- Ambiente de Execução Interativo (Jupyter/IPython)**
-      - ipython >=7.34.0
-   * **- Arquivos**
-      - gdown >= 5.2.2
-   * **- Integração**
+      - matplotlib >= 3.10.0
+   * **- IA, Visão Computacional e Datasets**   
+      - ultralytics >= 8.4.194
+      - opencv-python >= 5.0.0.93
+      - roboflow >= 1.7.3
+   * **- Backend, Validação e API**
+      - fastapi >= 0.141.1
+      - uvicorn >= 0.54.0
+      - pydantic >= 2.14.1
+      - python-multipart >= 0.0.32
+   * **- Ambiente de Execução Interativo e Assíncrono**
+      - IPython >= 7.34.0
+      - nest-asyncio >= 1.6.0
+   * **- Utilitários, CLI e Exposição Externa**
+      - PyYAML >= 6.0.3
+      - questionary >= 2.1.1
+      - pyngrok >= 9.1.0
+   * **- Integração e Cloud**
       - google >= 3.0.0
 
 ## 🧱 8. Estrutura do Projeto
